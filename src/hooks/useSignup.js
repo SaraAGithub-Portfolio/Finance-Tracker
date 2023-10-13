@@ -1,33 +1,43 @@
-import { useState } from "react"
-import { projectAuth } from "../components/firebase/config"
-
-
+import { useState, useEffect } from "react";
+import { projectAuth } from "../components/firebase/config";
+import { useAuthContext } from "./useAuthContext";
 
 export const useSignup = () => {
-    const [error, setError] = useState(null)
-    const [isPending, setIsPending] = useState(false)
+    const [isCanceled, setIsCanceled] = useState(false);
+    const [error, setError] = useState(null);
+    const [isPending, setIsPending] = useState(false);
+    const { dispatch } = useAuthContext();
 
     const signup = async (email, password, displayName) => {
-        setError(null)
-        setIsPending(true)
+        setError(null);
+        setIsPending(true);
 
         try {
-            const res = await projectAuth.createUserWithEmailAndPassword(email, password)
-            console.log(res.user)
+            const res = await projectAuth.createUserWithEmailAndPassword(email, password);
 
             if (!res) {
-                throw new Error('Could not complete signup')
+                throw new Error('Could not complete signup');
             }
-            await res.user.updateProfile({ displayName })
+            await res.user.updateProfile({ displayName });
 
-            setIsPending(false)
-            setError(null)
+            // dispatch login action
+            dispatch({ type: 'LOGIN', payload: res.user });
+
+            if (!isCanceled) {
+                setIsPending(false);
+                setError(null);
+            }
+        } catch (err) {
+            if (!isCanceled) {
+                console.log(err.message);
+                setError(err.message);
+                setIsPending(false);
+            }
         }
-        catch (err) {
-            console.log(err.message)
-            setError(err.message)
-            setIsPending(false)
-        }
-    }
-    return { error, isPending, signup }
-}
+    };
+    useEffect(() => {
+        return () => setIsCanceled(true)
+    }, [])
+
+    return { error, isPending, signup };
+};

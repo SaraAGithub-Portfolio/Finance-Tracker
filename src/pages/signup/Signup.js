@@ -8,9 +8,16 @@ export default function Signup() {
     const [displayName, setDisplayName] = useState('')
     const { signup, isPending, error } = useSignup()
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        console.log(email, password, displayName)
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        console.log(email, password, displayName);
+
+        try {
+            await signup(email, password, displayName);
+            console.log('User signed up');
+        } catch (err) {
+            console.error('Signup error: ', err.message);
+        }
     }
 
     return (
